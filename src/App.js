@@ -1,41 +1,49 @@
+import axios from "axios";
 import { useState } from "react"
 import { Button, Container } from "react-bootstrap";
+import { DisplayExpense } from "./components/displayExpense";
 
 export const App = () => {
   const [expenseValue, setExpenseValue] = useState(0);
   const [expenseTitle, setExpenseTitle] = useState('');
   const [noDataError, setNoDataError] = useState(false);
+  const [expenseData, setExpenseData] = useState(null);
   const [data, setData] = useState([]);
 
   const handleAddExpense = () => {
-    // axios.post('/addExpense', {
-    //   expenseTitle,
-    //   expenseValue
-    // })
-    let previousData = [];
-    if(localStorage.getItem('data') === null){
-      localStorage.setItem('data', []);
-    }else{
-      previousData = JSON.parse(localStorage.getItem('data'));
+    if(expenseTitle !== '' && expenseValue !== 0){
+      axios.post('/addexpense', {
+        expenseTitle,
+        expenseAmount: expenseValue,
+      }).then((res) => {
+        console.log(res);
+      }).catch((error) => {
+        console.log(error);
+      })
+      setExpenseTitle('');
+      setExpenseValue(0);
     }
-    const updatedData = [...previousData, {
-      expenseTitle,
-      expenseValue
-    }];
-    localStorage.setItem('data', JSON.stringify(updatedData));
-    setExpenseTitle('');
-    setExpenseValue(0);
   }
 
   const handleGetDetails = () => {
-    const details = localStorage.getItem('data');
-    if(details === null){
-      setNoDataError(true);
-    }
-    else{
-      setNoDataError(false);
-      setData(JSON.parse(details));
-    }
+    const tempData = {};
+    axios.get('/expense')
+    .then((response) => {
+      response.data.expenses.forEach((data) => {
+        const date = data.createdAt.slice(0, 10);
+        if(tempData.hasOwnProperty(date)){
+          tempData[date] = [...tempData[date], data];
+        }else{
+          Object.assign(tempData, {[date]: [data]});
+        }
+      });
+      console.log(tempData);
+      
+      setExpenseData(tempData);
+    })
+    .catch((error) =>{
+      console.log(error);
+    });
   }
   return(
     <Container>
@@ -57,20 +65,13 @@ export const App = () => {
         />
       </div>
       <Button onClick={() => 
-        handleAddExpense()}>Add Expense</Button>
+        handleAddExpense()} disabled={expenseValue === 0 || expenseTitle === ''}>Add Expense</Button>
       <Button onClick={() => {
         handleGetDetails();
       }}>Get Total Expense Details</Button>
       {
-        data.length !== 0 &&
-        data.map((item, index) => {
-          return(
-            <div key={index}>
-              <h4>{item.expenseTitle} : </h4>
-              <h6>{item.expenseValue}</h6>
-            </div>
-          )
-        })
+        expenseData !== null &&
+        <DisplayExpense expenseData={expenseData} />
       }
     </Container>
   )
