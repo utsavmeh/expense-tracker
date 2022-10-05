@@ -33,12 +33,28 @@ router.get('/expense', (req, res) => {
 			res.status(200).json({expenses: docs});
 		}
 	})
-
-	Expense.find({}).sort({createdAt: -1}).exec((err, docs) => { 
-		console.log(err);
-		console.log(docs);
-	});
 })
 
+router.put('/editexpense', (req, res) => {
+	const { expenseId, expenseTitle, expenseAmount } = req.body;
+	if(!expenseId && !expenseTitle && !expenseAmount){
+		return res.status(422).json({error: "please send all the fields"})
+	}
+	Expense.findById(expenseId).then((data) => {
+		data.expenseAmount = expenseAmount;
+		data.expenseTitle = expenseTitle;
+		res.send({message: "expense updated sucessfully"});
+		data.save();
+	}).catch((err) => res.send(err))
+})
+
+router.delete('/deleteExpense/:id', (req, res) => {
+	const id = req.params.id;
+	Expense.findById(id).remove().then((data) => {
+		res.send(data);
+	}).catch((err) => {
+		res.send(err);
+	})
+})
 
 module.exports = router;

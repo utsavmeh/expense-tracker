@@ -1,7 +1,10 @@
 import axios from "axios";
 import { useState } from "react"
 import { Button, Container } from "react-bootstrap";
-import { DisplayExpense } from "./components/displayExpense";
+import { useDispatch } from "react-redux";
+import { DisplayExpense } from "./components/displayExpenseCard";
+import { expenseDetails, getExpenseDetails } from "./Redux/Action/expenseDetails";
+
 
 export const App = () => {
   const [expenseValue, setExpenseValue] = useState(0);
@@ -9,6 +12,8 @@ export const App = () => {
   const [noDataError, setNoDataError] = useState(false);
   const [expenseData, setExpenseData] = useState(null);
   const [data, setData] = useState([]);
+
+  const dispatch = useDispatch();
 
   const handleAddExpense = () => {
     if(expenseTitle !== '' && expenseValue !== 0){
@@ -26,24 +31,8 @@ export const App = () => {
   }
 
   const handleGetDetails = () => {
-    const tempData = {};
-    axios.get('/expense')
-    .then((response) => {
-      response.data.expenses.forEach((data) => {
-        const date = data.createdAt.slice(0, 10);
-        if(tempData.hasOwnProperty(date)){
-          tempData[date] = [...tempData[date], data];
-        }else{
-          Object.assign(tempData, {[date]: [data]});
-        }
-      });
-      console.log(tempData);
-      
-      setExpenseData(tempData);
-    })
-    .catch((error) =>{
-      console.log(error);
-    });
+      dispatch(getExpenseDetails());
+      // setExpenseData(tempData);
   }
   return(
     <Container>
